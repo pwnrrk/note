@@ -1,6 +1,21 @@
 import { marked } from "marked";
 import React, { useEffect, useState } from "react";
-import "./app.css";
+import {
+  Stack,
+  Box,
+  TextField,
+  List,
+  ListItemButton,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Divider,
+  Typography,
+  Snackbar,
+  Alert,
+} from "@mui/material";
+import hljs from "highlight.js";
+import "highlight.js/styles/default.css";
 
 function getFile() {
   const path = window.api.path();
@@ -36,9 +51,12 @@ export default function App() {
   const [selectedFile, setSelectedFile] = useState();
   const [content, setContent] = useState();
   const [raw, setRaw] = useState("");
+  const [highlight, setHighlight] = useState();
   const [currentScroll, setCurrentScoll] = useState(0);
   const [newFileName, setNewFileName] = useState("");
   const [alert, setAlert] = useState();
+  const [focusItem, setFocusItem] = useState();
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     setFiles(getFile());
@@ -49,12 +67,15 @@ export default function App() {
       const data = getData(selectedFile);
       setRaw(data);
       marked.parse(data, (err, res) => setContent(res));
+      setHighlight(hljs.highlight(data, { language: "md" }).value);
     }
   }, [selectedFile]);
 
   useEffect(() => {
     if (raw) {
       marked.parse(raw, (err, res) => setContent(res));
+      setHighlight(hljs.highlight(raw, { language: "md" }).value);
+      writeFile(selectedFile, raw);
     }
   }, [raw]);
 
@@ -64,88 +85,144 @@ export default function App() {
     });
   }, [currentScroll]);
 
-  useEffect(() => {
-    if (alert) {
-      setTimeout(() => setAlert(undefined), 1500);
-    }
-  }, [alert]);
-
   const handleScroll = (event) => {
     setCurrentScoll(event.target.scrollTop);
+  };
+
+  const handleDelete = (fileName) => {
+    deleteFile(fileName);
+    setAlert("Deleted");
+    refresh();
+  };
+
+  const refresh = () => {
+    const files = getFile();
+    setFiles(files);
+    setNewFileName("");
+    setFocusItem(undefined);
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
     writeFile(`${newFileName}.md`, "");
-    const files = getFile();
-    setFiles(files);
-    setNewFileName("");
-    setAlert("Created");
-  };
-
-  const handleDelete = () => {
-    const file = selectedFile;
-    deleteFile(selectedFile);
-    setFiles(getFile());
-    setSelectedFile(undefined);
-    setRaw("");
-    setContent(undefined);
-    setAlert(`Deleted ${file}`);
-  };
-
-  const handleSave = () => {
-    writeFile(selectedFile, raw);
-    setAlert("Saved !");
+    setAlert(`${newFileName} Created`);
+    refresh();
   };
 
   return (
-    <main className="container">
-      <nav className="toolbar">
-        <button style={{ color: "var(--danger)" }} onClick={handleDelete}>
-          Delete
-        </button>
-        <button onClick={handleSave}>Save</button>
-      </nav>
-      <div className="main-pane">
-        <div className="file-list">
-          <div className="file-item flex">
-            <input type="search" placeholder="Search" />
-          </div>
-          <div className="inner-file-list">
-            {files?.map((file) => (
-              <div
-                className={`file-item ${selectedFile == file ? "active" : ""}`}
-                key={file}
-                onClick={() => setSelectedFile(file)}
-              >
-                {file}
-              </div>
-            ))}
-          </div>
-          <div className="file-item flex">
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder="New File"
-                value={newFileName}
-                onChange={(ev) => setNewFileName(ev.target.value)}
-              />
-            </form>
-          </div>
-        </div>
-        <textarea
-          className="file-edit md-view"
-          value={raw}
-          onChange={(ev) => setRaw(ev.target.value)}
-          onScroll={handleScroll}
-        ></textarea>
-        <div onScroll={handleScroll} className="file-view md-view">
-          {selectedFile && content && (
-            <div dangerouslySetInnerHTML={{ __html: content }}></div>
-          )}
-        </div>
-      </div>
-      {alert && <div className="alert success">{alert}</div>}
-    </main>
+    <Stack
+      direction="row"
+      position="fixed"
+      top={0}
+      left={0}
+      right={0}
+      bottom={0}
+    >
+      <Stack>
+        <Box padding="8px">
+          <TextField
+            label="Search"
+            variant="standard"
+            value={searchText}
+            onChange={(ev) => setSearchText(ev.target.value)}
+          />
+        </Box>
+        <Box flex={1} overflow="auto">
+          <List flex={1}>
+            {files
+              ?.filter((file) =>
+                searchText
+                  ? file.toUpperCase().includes(searchText.toUpperCase())
+                  : true
+              )
+              .map((file) => (
+                <ListItemButton
+                  selected={selectedFile === file}
+                  key={file}
+                  onClick={() => setSelectedFile(file)}
+                  onContextMenu={(ev) =>
+                    setFocusItem({ x: ev.clientX, y: ev.clientY, file })
+                  }
+                >
+                  <ListItemText>{file}</ListItemText>
+                </ListItemButton>
+              ))}
+          </List>
+        </Box>
+        <Box padding="8px">
+          <form onSubmit={handleSubmit}>
+            <TextField
+              label="New File"
+              variant="standard"
+              value={newFileName}
+              onChange={(ev) => setNewFileName(ev.target.value)}
+            />
+          </form>
+        </Box>
+      </Stack>
+      <Divider orientation="vertical" flexItem />
+      <Stack flex={1} gap={1}>
+        <Box paddingX={2}>
+          <Typography fontWeight={500} variant="h6">
+            {selectedFile || "Open File To Edit"}
+          </Typography>
+        </Box>
+        <Stack direction="row" overflow="auto" flex={1}>
+          <Box flex={1} position="relative">
+            <div
+              className="highlight-js md-view"
+              dangerouslySetInnerHTML={{ __html: highlight }}
+            ></div>
+            {selectedFile && (
+              <textarea
+                className="file-edit md-view"
+                value={raw}
+                onChange={(ev) => setRaw(ev.target.value)}
+                onScroll={handleScroll}
+              ></textarea>
+            )}
+          </Box>
+          <Divider orientation="vertical" flexItem />
+          <Box
+            flex={1}
+            padding="8px"
+            overflow="auto"
+            className="md-view"
+            onScroll={handleScroll}
+          >
+            {selectedFile && content && (
+              <div dangerouslySetInnerHTML={{ __html: content }}></div>
+            )}
+          </Box>
+        </Stack>
+      </Stack>
+      <Snackbar
+        open={alert !== undefined}
+        autoHideDuration={3000}
+        onClose={() => setAlert(undefined)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setAlert(undefined)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          {alert}
+        </Alert>
+      </Snackbar>
+      <Menu
+        id="item-context"
+        open={focusItem !== undefined}
+        onClose={() => setFocusItem(undefined)}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          focusItem !== undefined
+            ? { top: focusItem.y, left: focusItem.x }
+            : undefined
+        }
+      >
+        <MenuItem onClick={() => handleDelete(focusItem.file)}>Delete</MenuItem>
+      </Menu>
+    </Stack>
   );
 }
