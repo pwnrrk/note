@@ -20,6 +20,10 @@ import "highlight.js/styles/default.css";
 function getFile() {
   const path = window.api.path();
   const fs = window.api.fs();
+  const dir = path.join(path.resolve(), "storage");
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
   const files = fs.readdirSync(path.join(path.resolve(), "storage"));
   return files;
 }
@@ -52,11 +56,11 @@ export default function App() {
   const [content, setContent] = useState();
   const [raw, setRaw] = useState("");
   const [highlight, setHighlight] = useState();
-  const [currentScroll, setCurrentScoll] = useState(0);
   const [newFileName, setNewFileName] = useState("");
   const [alert, setAlert] = useState();
   const [focusItem, setFocusItem] = useState();
   const [searchText, setSearchText] = useState("");
+  const [currentScroll, setCurrentScroll] = useState(0);
 
   useEffect(() => {
     setFiles(getFile());
@@ -86,7 +90,7 @@ export default function App() {
   }, [currentScroll]);
 
   const handleScroll = (event) => {
-    setCurrentScoll(event.target.scrollTop);
+    setCurrentScroll(event.target.scrollTop);
   };
 
   const handleDelete = (fileName) => {
@@ -99,6 +103,11 @@ export default function App() {
     const files = getFile();
     setFiles(files);
     setNewFileName("");
+    if (focusItem.file === selectedFile) {
+      setRaw("");
+      setContent(undefined);
+      setHighlight(undefined);
+    }
     setFocusItem(undefined);
   };
 
@@ -169,10 +178,10 @@ export default function App() {
         </Box>
         <Stack direction="row" overflow="auto" flex={1}>
           <Box flex={1} position="relative">
-            <div
+            <Box
               className="highlight-js md-view"
               dangerouslySetInnerHTML={{ __html: highlight }}
-            ></div>
+            ></Box>
             {selectedFile && (
               <textarea
                 className="file-edit md-view"
@@ -185,7 +194,7 @@ export default function App() {
           <Divider orientation="vertical" flexItem />
           <Box
             flex={1}
-            padding="8px"
+            padding="16px"
             overflow="auto"
             className="md-view"
             onScroll={handleScroll}
@@ -221,7 +230,10 @@ export default function App() {
             : undefined
         }
       >
-        <MenuItem onClick={() => handleDelete(focusItem.file)}>Delete</MenuItem>
+        <MenuItem>Export</MenuItem>
+        <MenuItem onClick={() => handleDelete(focusItem.file)}>
+          <Typography color="danger">Delete</Typography>
+        </MenuItem>
       </Menu>
     </Stack>
   );

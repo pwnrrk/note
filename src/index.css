@@ -408,9 +408,10 @@ sup {
 }
 .file-edit {
   overflow: auto;
+  overflow-x: hidden;
   padding: 16px;
-  line-height: 1.2;
-  white-space: pre;
+  line-height: 1.8;
+  white-space: pre-wrap;
   appearance: none;
   border: none;
   font-family: "Source Code Pro", "Ubuntu Mono", "Courier New", Courier,
@@ -426,7 +427,7 @@ sup {
   caret-color: black;
 }
 .highlight-js {
-  line-height: 1.2;
+  line-height: 1.8;
   padding: 16px;
   position: absolute;
   top: 0;
@@ -434,7 +435,8 @@ sup {
   right: 0;
   bottom: 0;
   overflow: auto;
-  white-space: pre;
+  overflow-x: hidden;
+  white-space: pre-wrap;
   font-family: "Source Code Pro", "Ubuntu Mono", "Courier New", Courier,
     monospace;
   font-size: 14px;
