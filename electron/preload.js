@@ -3,10 +3,16 @@ const fs = require("fs");
 const path = require("path");
 
 contextBridge.exposeInMainWorld("api", {
-  fs: () => {
+  fs() {
     return fs;
   },
-  path: () => {
+  path() {
     return path;
   },
+  // importMarkdown() {
+  //   return dialog.showOpenDialogSync(browserWindow, {
+  //     defaultPath: "~",
+  //     filters: ".md",
+  //   });
+  // },
 });

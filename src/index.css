@@ -1,8 +1,4 @@
 body {
-  background-color: white;
-  color: var(--dark);
-}
-body {
   font-family: Helvetica, arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;

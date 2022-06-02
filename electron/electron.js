@@ -1,4 +1,5 @@
-const { app, BrowserWindow, contextBridge } = require("electron");
+const { app, BrowserWindow } = require("electron");
+let browserWindow;
 function createWindow() {
   const win = new BrowserWindow({
     width: 800,
@@ -8,6 +9,7 @@ function createWindow() {
     },
   });
   win.loadFile("index.html");
+  return win;
 }
 
 app.whenReady().then(() => {
@@ -15,7 +17,7 @@ app.whenReady().then(() => {
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      browserWindow = createWindow();
     }
   });
 });
@@ -25,3 +27,5 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+module.exports = browserWindow;
