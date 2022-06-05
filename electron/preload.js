@@ -9,10 +9,4 @@ contextBridge.exposeInMainWorld("api", {
   path() {
     return path;
   },
-  // importMarkdown() {
-  //   return dialog.showOpenDialogSync(browserWindow, {
-  //     defaultPath: "~",
-  //     filters: ".md",
-  //   });
-  // },
 });

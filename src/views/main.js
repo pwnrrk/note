@@ -109,6 +109,8 @@ export default function Main() {
   };
 
   const handleDelete = (fileName) => {
+    const isConfirm = window.confirm(`Delete ${selectedFile}`);
+    if (!isConfirm) return;
     deleteFile(fileName);
     setAlert("Deleted");
     refresh();
